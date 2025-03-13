@@ -8,7 +8,7 @@
       <div v-if="!isLoggedIn">
         <form @submit.prevent="submitLogin">
           <div class="form-group">
-            <label for="employeeName">Hr Name:</label>
+            <label for="employeeName">HR Name:</label>
             <input
               type="text"
               id="employeeName"
@@ -97,7 +97,7 @@ export default {
     async submitLogin() {
       try {
         // Send POST request to backend for login
-        const response = await axios.post('http://localhost:4000/api/hr/login', {
+        const response = await axios.post('http://localhost:4000/hr/login', {
           employeeName: this.employeeName,  // Use employee name for login
           password: this.password,
         });
@@ -140,7 +140,7 @@ export default {
 
       try {
         // Send PATCH request to backend to update password
-        const response = await axios.patch('http://localhost:4000/api/hr/reset-password', {
+        const response = await axios.patch('http://localhost:4000/hr/reset-password', {
           employeeName: this.resetEmployeeName,  // Use employee name for reset
           newPassword: this.newPassword,
         });

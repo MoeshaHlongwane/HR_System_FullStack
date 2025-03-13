@@ -11,6 +11,9 @@
           <router-link to='/employees' class="nav-link" href="#">Employees Details</router-link>
         </li>
         <li class="nav-item">
+          <router-link to='/reviews' class="nav-link" href="#">Review Performance</router-link>
+        </li>
+        <li class="nav-item">
           <router-link to='/attendance' class="nav-link" href="#">Track Attendance</router-link>
         </li>
         <li class="nav-item">

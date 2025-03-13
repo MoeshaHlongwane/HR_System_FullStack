@@ -3,6 +3,7 @@ import { createStore } from 'vuex';
 export default createStore({
   state: {
     employees: [],
+    selectedEmployee: null, // To store employee data including review
     attendance_records: [], 
     leaverequests: null,
     payroll: [],
@@ -17,6 +18,9 @@ export default createStore({
     // Employees
     setEmployees(state, employees) {
       state.employees = employees;
+    },
+    setSelectedEmployee(state, employee) {
+      state.selectedEmployee = employee;
     },
     addEmployee(state, employee) {
       state.employees.unshift(employee); // Add the new employee at the start of the list
@@ -86,6 +90,17 @@ export default createStore({
         console.log(attendance_records);
       } catch (error) {
         console.error('Failed to fetch data:', error);
+      }
+    },
+    async fetchSingleEmployee({ commit }, employee_id) {
+      try {
+        const response = await fetch(`http://localhost:4000/employees/${employee_id}`);
+        if (!response.ok) throw new Error('Failed to fetch employee');
+        
+        const employee = await response.json();
+        commit('setSelectedEmployee', employee);
+      } catch (error) {
+        console.error('Error fetching employee:', error);
       }
     },
     // New action to update an attendance record
@@ -168,15 +183,15 @@ export default createStore({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(employee),
         });
-        if (response.ok) {
-          const newEmployee = await response.json();
-          commit('addEmployee', newEmployee);
-          location.reload();
-        } else {
+        if (!response.ok) {
           throw new Error('Failed to add employee');
         }
+        const newEmployee = await response.json();
+        commit('addEmployee', newEmployee);
+        location.reload();
       } catch (error) {
         console.error('Error adding employee:', error);
+        // Optionally, you can commit a mutation to set an error state in the store
       }
     },
 

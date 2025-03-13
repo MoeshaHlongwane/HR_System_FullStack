@@ -1,21 +1,20 @@
 <template>
   <NavBar />
-  <br>
+  <br />
   <div class="header-container">
     <h2>Employees Information</h2>
     <input v-model="searchQuery" placeholder="Search employees..." class="search-bar" />
-    <button @click="showAddEmployeeModal" class="add-btn">Add Employee</button>
+    <button @click="isAddModalVisible = true" class="add-btn">Add Employee</button>
   </div>
 
   <table class="employee-table">
     <thead>
       <tr>
         <th>Employee ID</th>
-        <th>Full Name</th>
+        <th>First Name</th>
+        <th>Last Name</th>
         <th>Contact</th>
         <th>Position</th>
-        <th>Review</th>
-        <th>History</th>
         <th>Department ID</th>
         <th>Department Name</th>
         <th>Action</th>
@@ -24,11 +23,10 @@
     <tbody>
       <tr v-for="employee in filteredEmployees" :key="employee.employee_id">
         <td>{{ employee.employee_id }}</td>
-        <td>{{ employee.full_name }}</td>
+        <td>{{ employee.first_name }}</td>
+        <td>{{ employee.last_name }}</td>
         <td>{{ employee.contact }}</td>
         <td>{{ employee.position }}</td>
-        <td>{{ employee.review }}</td>
-        <td>{{ employee.history }}</td>
         <td>{{ employee.department_id }}</td>
         <td>{{ employee.department_name }}</td>
         <td class="action-buttons">
@@ -43,11 +41,11 @@
   <div v-if="isAddModalVisible" class="modal">
     <div class="modal-content">
       <h3>Add New Employee</h3>
-      <input v-model="insertEmployee.full_name" placeholder="Full Name" />
+      <input v-model="insertEmployee.first_name" placeholder="First Name" />
+      <input v-model="insertEmployee.last_name" placeholder="Last Name" />
       <input v-model="insertEmployee.contact" placeholder="Contact" />
       <input v-model="insertEmployee.position" placeholder="Position" />
       <input v-model="insertEmployee.department_id" placeholder="Department ID" />
-      <input v-model="insertEmployee.department_name" placeholder="Department Name" />
       <button @click="handleAddEmployee">Save</button>
       <button @click="closeAddModal">Cancel</button>
     </div>
@@ -57,10 +55,10 @@
   <div v-if="isEditModalVisible" class="modal">
     <div class="modal-content">
       <h3>Edit Employee</h3>
-      <input v-model="editedEmployee.full_name" placeholder="Full Name" />
+      <input v-model="editedEmployee.first_name" placeholder="First Name" />
+      <input v-model="editedEmployee.last_name" placeholder="Last Name" />
       <input v-model="editedEmployee.contact" placeholder="Contact" />
       <input v-model="editedEmployee.position" placeholder="Position" />
-      <input v-model="editedEmployee.department_name" placeholder="Department Name" />
       <button @click="handleUpdateEmployee">Save</button>
       <button @click="closeEditModal">Cancel</button>
     </div>
@@ -77,32 +75,30 @@
 </template>
 
 <script>
-import NavBar from '@/components/NavBar.vue';
-import { mapState, mapActions } from 'vuex';
+import NavBar from "@/components/NavBar.vue";
+import { mapState, mapActions } from "vuex";
 
 export default {
   components: { NavBar },
   data() {
     return {
-      searchQuery: '',
+      searchQuery: "",
       isAddModalVisible: false,
       isEditModalVisible: false,
       isDeleteModalVisible: false,
       insertEmployee: {
-        full_name: '',
-        contact: '',
-        position: '',
-        department_id: '',
-        department_name: '',
-        review: 'new hire',
-        history: 'new hire',
+        first_name: "",
+        last_name: "",
+        contact: "",
+        position: "",
+        department_id: "",
       },
       editedEmployee: null,
       employeeToDelete: null,
     };
   },
   computed: {
-    ...mapState(['employees']),
+    ...mapState(["employees"]),
     filteredEmployees() {
       return this.employees?.filter((employee) =>
         Object.values(employee).some((value) =>
@@ -112,49 +108,67 @@ export default {
     },
   },
   methods: {
-    ...mapActions(['getEmployees', 'addEmployee', 'updateEmployee', 'deleteEmployee']),
-    showAddEmployeeModal() {
-      this.isAddModalVisible = true;
+    ...mapActions(["getEmployees", "addEmployee", "updateEmployee", "deleteEmployee"]),
+
+    async handleAddEmployee() {
+      try {
+        const newEmployee = await this.addEmployee(this.insertEmployee);
+
+        // Automatically push the new employee to reviews
+        await this.$axios.post("http://localhost:4000/reviews", {
+          employee_id: newEmployee.employee_id,
+          performance_review: "New Hire",
+        });
+
+        this.closeAddModal();
+      } catch (error) {
+        console.error("Error adding employee:", error);
+      }
     },
-    closeAddModal() {
-      this.isAddModalVisible = false;
-      this.insertEmployee = {
-        full_name: '',
-        contact: '',
-        position: '',
-        department_id: '',
-        department_name: '',
-        review: 'new hire',
-        history: 'new hire',
-      };
-    },
-    editEmployee(employee) {
-      this.editedEmployee = { ...employee };
-      this.isEditModalVisible = true;
-    },
-    closeEditModal() {
-      this.isEditModalVisible = false;
-      this.editedEmployee = null;
-    },
-    confirmDelete(employee) {
-      this.employeeToDelete = employee;
-      this.isDeleteModalVisible = true;
-    },
-    closeDeleteModal() {
-      this.isDeleteModalVisible = false;
-      this.employeeToDelete = null;
-    },
-    handleAddEmployee() {
-      this.addEmployee(this.insertEmployee);
-      this.closeAddModal();
-    },
+
     handleUpdateEmployee() {
       this.updateEmployee(this.editedEmployee);
       this.closeEditModal();
     },
+
     handleDeleteEmployee() {
       this.deleteEmployee(this.employeeToDelete.employee_id);
       this.closeDeleteModal();
+    },
+
+    editEmployee(employee) {
+      this.editedEmployee = { ...employee };
+      this.isEditModalVisible = true;
+    },
+
+    confirmDelete(employee) {
+      this.employeeToDelete = employee;
+      this.isDeleteModalVisible = true;
+    },
+
+    closeAddModal() {
+      this.isAddModalVisible = false;
+      this.resetEmployeeForm();
+    },
+
+    closeEditModal() {
+      this.isEditModalVisible = false;
+      this.editedEmployee = null;
+    },
+
+    closeDeleteModal() {
+      this.isDeleteModalVisible = false;
+      this.employeeToDelete = null;
+    },
+
+    resetEmployeeForm() {
+      this.insertEmployee = {
+        first_name: "",
+        last_name: "",
+        contact: "",
+        position: "",
+        department_id: "",
+      };
     },
   },
   mounted() {
@@ -162,17 +176,48 @@ export default {
   },
 };
 </script>
+
+
 <style scoped>
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .employee-table th,
+  .employee-table td {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .header-container {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .search-bar {
+    width: 90%;
+  }
+
+  .add-btn {
+    width: 100%;
+  }
+}
+
 /* Modal Styling */
 .modal {
   position: fixed;
-  top: 60%;
+  top: 65%;
   left: 50%;
-  width: 90%;
+  width: 50%;
   height: auto; /* This allows the height to adjust based on content */
   transform: translate(-50%, -50%); /* Centers the modal */
   display: block; /* Ensure the modal is displayed as a block element */
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: blue;
+  color: #0056B3;
   z-index: 1000; /* Makes sure the modal appears above other content */
 }
 
