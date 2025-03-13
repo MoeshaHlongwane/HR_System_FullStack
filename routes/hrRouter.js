@@ -7,6 +7,6 @@ const router = express.Router();
 router.post('/login', loginHRStaffCon);
 
 // Password Reset route for HR Staff (PATCH method)
-router.patch('/reset-password', resetPasswordHRStaffCon);
+router.patch('/resetpassword', resetPasswordHRStaffCon);
 
 export default router;

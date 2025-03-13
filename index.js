@@ -1,4 +1,4 @@
-import mysql from 'mysql2/promise';
+
 import express from 'express';
 import cors from 'cors'; // Ensure cross-origin resource sharing is allowed
 import { config } from 'dotenv';
@@ -7,6 +7,7 @@ import employeesRouter from './routes/employeesRouter.js';
 import leaverequestRouter from './routes/leaverequestRouter.js';
 import payrollRouter from './routes/payrollRouter.js';
 import hrRouter from './routes/hrRouter.js'; // New HR login route
+import reviewsRouter from './routes/reviewsRouter.js'
 config();
 
 const app = express();
@@ -22,7 +23,7 @@ app.use('/attendance', attendanceRouter);
 app.use('/employees', employeesRouter);
 app.use('/leaverequests', leaverequestRouter);
 app.use('/payroll', payrollRouter);
-app.use('/api/hr', hrRouter);
+app.use('/reviews', reviewsRouter)
 
 
 // HR login route (new)
@@ -31,6 +32,6 @@ app.use('/hr', hrRouter); // Route for handling HR login requests
 // Start the server on port 4000
 app.listen(4000, () => {
   console.log('Server is running at http://localhost:4000');
-  console.log('Hi...');
+  console.log('Hi❤️...');
 });
 
