@@ -1,63 +1,43 @@
-import {
-    getLeaveRequests,
-    getSingleLeaveRequest,
-    insertLeaveRequest,
-    deleteSingleLeaveRequest,
-    updateLeaveRequestStatus
-} from "../model/leaverequestModal.js";
-const getLeaveRequestsCon = async (req, res) => {
-    try {
-      const leaveRequests = await getLeaveRequests();
-      res.json({ leave_requests: leaveRequests });
-    } catch (error) {
-      res.status(500).send({ error: 'Failed to fetch leave requests' });
-    }
+import { createLeaveRequest, getAllLeaveRequests, updateLeaveRequestStatus } from '../model/leaverequestModal.js';
+
+export const createLeaveRequestHandler = async (req, res) => {
+  const { leave_type, start_date, end_date, reason, employee_id } = req.body;
+
+  try {
+    await createLeaveRequest(employee_id, start_date, end_date, reason, leave_type);
+    res.status(200).send('Leave request submitted successfully');
+  } catch (error) {
+    console.error('Error submitting leave request:', error);
+    res.status(500).send('Error submitting leave request');
   }
-const getSingleLeaveRequestCon = async (req, res) => {
-    try {
-      const leaveRequest = await getSingleLeaveRequest(req.params.leave_request_id);
-      if (!leaveRequest) {
-        return res.status(404).send({ error: 'Leave request not found' });
-      }
-      res.json({ leave_request: leaveRequest });
-    } catch (error) {
-      res.status(500).send({ error: 'Failed to fetch leave request' });
-    }
+};
+
+export const getLeaveRequestsHandler = async (req, res) => {
+  try {
+    const leaveRequests = await getAllLeaveRequests();
+    res.status(200).json(leaveRequests);
+  } catch (error) {
+    console.error('Error fetching leave requests:', error);
+    res.status(500).send('Error fetching leave requests');
   }
-const postLeaveRequestCon = async (req, res) => {
-    const { employee_id, date, status, reason, action } = req.body;
-    try {
-      const updatedLeaveRequests = await insertLeaveRequest(employee_id, date, status, reason, action);
-      res.json({ leave_requests: updatedLeaveRequests });
-    } catch (error) {
-      res.status(500).send({ error: 'Failed to add leave request' });
-    }
+};
+
+export const updateLeaveRequestStatusHandler = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  // Add validation
+  if (!status || !['Approved', 'Rejected'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status value' });
   }
-const deleteSingleLeaveRequestCon = async (req, res) => {
-    try {
-      const updatedLeaveRequests = await deleteSingleLeaveRequest(req.params.leave_request_id);
-      res.json({ leave_requests: updatedLeaveRequests });
-    } catch (error) {
-      res.status(500).send({ error: 'Failed to delete leave request' });
-    }
+
+  try {
+    const result = await updateLeaveRequestStatus(id, status);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error('Error updating leave request status:', error);
+    res.status(500).json({ 
+      message: error.message || 'Error updating leave request status' 
+    });
   }
-const patchLeaveRequestCon = async (req, res) => {
-    const leaveRequestId = req.params.id;
-    const { status } = req.body;
-    try {
-      if (!status) {
-        return res.status(400).send({ error: 'Missing required field: status' });
-      }
-      const updatedLeaveRequests = await updateLeaveRequestStatus(leaveRequestId, status);
-      res.json({ leave_requests: updatedLeaveRequests });
-    } catch (error) {
-      res.status(500).send({ error: 'Failed to update leave request' });
-    }
-  }
-export {
-    getLeaveRequestsCon,
-    getSingleLeaveRequestCon,
-    postLeaveRequestCon,
-    deleteSingleLeaveRequestCon,
-    patchLeaveRequestCon
 };

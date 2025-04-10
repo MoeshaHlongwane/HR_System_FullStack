@@ -1,7 +1,7 @@
 import { pool } from "../config/config.js";
 const getPayrollRecords = async () => {
   const [data] = await pool.query(`
-    SELECT payroll.*, employees.full_name
+    SELECT payroll.*, employees.first_name
     FROM employees
     INNER JOIN payroll ON employees.employee_id = payroll.employee_id
   `);
@@ -9,7 +9,7 @@ const getPayrollRecords = async () => {
 };
 const getSinglePayrollRecord = async (payroll_id) => {
   const [data] = await pool.query(`
-    SELECT payroll.*, employees.full_name
+    SELECT payroll.*, employees.first_name, employees.last_name
     FROM payroll
     INNER JOIN employees ON payroll.employee_id = employees.employee_id
     WHERE payroll.payroll_id = ?

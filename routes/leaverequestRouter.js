@@ -1,12 +1,14 @@
 import express from 'express';
-import {getLeaveRequestsCon,getSingleLeaveRequestCon,postLeaveRequestCon,deleteSingleLeaveRequestCon,patchLeaveRequestCon} from '../controller/leaverequestController.js';
+import {
+  createLeaveRequestHandler,
+  getLeaveRequestsHandler,
+  updateLeaveRequestStatusHandler // Add this
+} from '../controller/leaverequestController.js';
 
 const router = express.Router();
 
-router.get('/', getLeaveRequestsCon);
-router.get('/:leave_request_id', getSingleLeaveRequestCon);
-router.post('/', postLeaveRequestCon);
-router.delete('/:leave_request_id', deleteSingleLeaveRequestCon);
-router.patch('/:leave_request_id', patchLeaveRequestCon);
-
+router.post('/', createLeaveRequestHandler);
+router.get('/', getLeaveRequestsHandler);
+router.patch('/:id', updateLeaveRequestStatusHandler); // Add this generic route
+// Keep or remove the specific approve/reject routes as needed
 export default router;

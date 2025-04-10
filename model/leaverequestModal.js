@@ -1,70 +1,55 @@
-import { pool } from "../config/config.js";
-// Get all leave requests from the database
-const getLeaveRequests = async () => {
-    try {
-      const [data] = await pool.query(`
-        SELECT leave_requests.*, employees.full_name
-        FROM employees
-        INNER JOIN leave_requests ON employees.employee_id = leave_requests.employee_id
-      `);
-      // Format the dates before returning
-      return data.map(request => ({
-        ...request,
-        date: new Date(request.date).toLocaleDateString(), // Format date
-      }));
-    } catch (error) {
-      console.error('Error fetching leave requests:', error);
-      throw new Error('Failed to fetch leave requests');
+import { pool } from '../config/config.js';
+
+// Create a new leave request
+export const createLeaveRequest = async (employee_id, start_date, end_date, reason, leave_type) => {
+  const query = `
+    INSERT INTO leave_requests (employee_id, start_date, end_date, reason, leave_type, status) 
+    VALUES (?, ?, ?, ?, ?, 'Pending')
+  `;
+  
+  await pool.execute(query, [employee_id, start_date, end_date, reason, leave_type]);
+};
+
+// Get all leave requests with employee names
+export const getAllLeaveRequests = async () => {
+  try {
+    const query = `
+      SELECT lr.*, e.first_name, e.last_name 
+      FROM leave_requests lr
+      INNER JOIN employees e ON lr.employee_id = e.employee_id
+      ORDER BY lr.id DESC
+    `;
+    const [rows] = await pool.execute(query);
+    return rows;
+  } catch (error) {
+    console.error("Error fetching leave requests:", error);
+    throw error;
+  }
+};
+
+// Update leave request status
+export const updateLeaveRequestStatus = async (id, status) => {
+  // Validate parameters
+  if (typeof id === 'undefined' || typeof status === 'undefined') {
+    throw new Error('Both id and status parameters are required');
+  }
+
+  try {
+    const query = `UPDATE leave_requests SET status = ? WHERE id = ?`;
+    const [result] = await pool.execute(query, [status, id]);
+    
+    if (result.affectedRows === 0) {
+      throw new Error('No leave request found with that ID');
     }
-  };
-  const getSingleLeaveRequest = async (leave_request_id) => {
-    try {
-      const [data] = await pool.query(`
-        SELECT leave_requests.*, employees.full_name
-        FROM leave_requests
-        INNER JOIN employees ON leave_requests.employee_id = employees.employee_id
-        WHERE leave_requests.leave_request_id = ?
-      `, [leave_request_id]);
-      return data[0]; // Return the first record as expected
-    } catch (error) {
-      console.error('Error fetching single leave request:', error);
-      throw new Error('Failed to fetch leave request');
-    }
-  };
-const updateLeaveRequestStatus = async (leave_request_id, status) => {
-    try {
-      await pool.query(
-        'UPDATE leave_requests SET status = ? WHERE leave_request_id = ?',
-        [status, leave_request_id]
-      );
-      // Return the updated list of leave requests after updating
-      return await getLeaveRequests();
-    } catch (error) {
-      console.error('Error updating leave request status:', error);
-      throw new Error('Failed to update leave request status');
-    }
-  };
-  const insertLeaveRequest = async (employee_id, date, status, reason, action) => {
-    try {
-      await pool.query(
-        'INSERT INTO leave_requests (employee_id, date, status, reason, action) VALUES (?, ?, ?, ?, ?)',
-        [employee_id, date, status, reason, action]
-      );
-      // Return the updated leave request list after insertion
-      return await getLeaveRequests();
-    } catch (error) {
-      console.error('Error inserting leave request:', error);
-      throw new Error('Failed to add leave request');
-    }
-  };
-  const deleteSingleLeaveRequest = async (leave_request_id) => {
-    try {
-      await pool.query('DELETE FROM leave_requests WHERE leave_request_id = ?', [leave_request_id]);
-      // Return the updated leave request list after deletion
-      return await getLeaveRequests();
-    } catch (error) {
-      console.error('Error deleting leave request:', error);
-      throw new Error('Failed to delete leave request');
-    }
-  };
-export { getLeaveRequests, getSingleLeaveRequest, insertLeaveRequest, deleteSingleLeaveRequest, updateLeaveRequestStatus };
+    
+    return { 
+      success: true, 
+      message: 'Status updated successfully',
+      id,
+      newStatus: status
+    };
+  } catch (error) {
+    console.error("Error updating leave request status:", error);
+    throw error;
+  }
+};

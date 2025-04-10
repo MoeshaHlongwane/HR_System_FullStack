@@ -41,7 +41,7 @@ const postAttendanceRecordCon = async (req, res) => {
   }
 };
 
- const patchAttendanceRecordCon = async (req, res) => {
+const patchAttendanceRecordCon = async (req, res) => {
   const { attendance_id } = req.params;
   const updatedFields = req.body;
 
@@ -62,7 +62,7 @@ const postAttendanceRecordCon = async (req, res) => {
 };
 
 // Route to delete an attendance record by ID
- const deleteSingleAttendanceRecordCon = async (req, res) => {
+const deleteSingleAttendanceRecordCon = async (req, res) => {
   const { attendance_id } = req.params;
   try {
     const deletedRecord = await deleteSingleAttendanceRecord(attendance_id); // Delete from model
@@ -72,4 +72,8 @@ const postAttendanceRecordCon = async (req, res) => {
     res.status(500).json({ error: 'Error deleting attendance record' });
   }
 };
-export{getAttendanceRecordsCon,getSingleAttendanceRecordCon,postAttendanceRecordCon,patchAttendanceRecordCon, deleteSingleAttendanceRecordCon}
+export{getAttendanceRecordsCon,
+  getSingleAttendanceRecordCon,
+  postAttendanceRecordCon,
+  patchAttendanceRecordCon, 
+  deleteSingleAttendanceRecordCon}

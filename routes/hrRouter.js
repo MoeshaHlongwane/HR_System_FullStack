@@ -1,12 +1,21 @@
-import express from 'express';
-import { loginHRStaffCon, resetPasswordHRStaffCon } from '../controller/hrController.js';
+import express from "express";
+import { 
+    registerCon, 
+    registerAdmin, 
+    login, 
+    adminLogin, 
+    forgotPassword,
+} from "../Controller/authCon.js";
 
 const router = express.Router();
 
-// Login route for HR Staff
-router.post('/login', loginHRStaffCon);
+// User Routes
+router.post("/register", registerCon);
+router.post("/login", login);
+router.post("/forgot-password", forgotPassword); // Added Forgot Password Route
 
-// Password Reset route for HR Staff (PATCH method)
-router.patch('/resetpassword', resetPasswordHRStaffCon);
+// Admin Routes
+router.post("/admin/register", registerAdmin);
+router.post("/admin/login", adminLogin);
 
 export default router;

@@ -27,23 +27,59 @@ const getSingleEmployee = async (employee_id) => {
 };
 
 
-// Insert a new employee
+// In your employee modal (config.js)
 const insertEmployee = async (first_name, last_name, position, contact, department_id) => {
-  const query = `
-    INSERT INTO employees (first_name, last_name, position, contact, department_id)
-    VALUES (?, ?, ?, ?, ?);
-  `;
-  const values = [first_name, last_name, position, contact, department_id];
-
   let connection;
   try {
-    connection = await pool.getConnection(); // Get a connection from the pool
-    const [result] = await connection.query(query, values);
-    return result.insertId; // Return the new employee_id
+    connection = await pool.getConnection();
+    await connection.beginTransaction(); // Start transaction
+
+    // Insert employee
+    const employeeQuery = `
+      INSERT INTO employees (first_name, last_name, position, contact, department_id)
+      VALUES (?, ?, ?, ?, ?);
+    `;
+    const employeeValues = [first_name, last_name, position, contact, department_id];
+    const [employeeResult] = await connection.query(employeeQuery, employeeValues);
+    const employee_id = employeeResult.insertId;
+    const employee_name = `${first_name} ${last_name}`;
+
+    // Get current month and year for attendance
+    const currentDate = new Date();
+    const month_year = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+    
+    // Create default attendance record with all days marked as 'absent'
+    const attendanceRecord = {
+      employee_id,
+      employee_name,
+      month_year,
+      // Initialize all days as 'absent' (assuming your table has days 1-31)
+      ...Object.fromEntries(Array.from({length: 31}, (_, i) => [`day_${i+1}`, 'absent']))
+    };
+
+    // Insert attendance record
+    const days = Object.keys(attendanceRecord).filter(key => key.startsWith('day_'));
+    const dayValues = days.map(day => attendanceRecord[day]);
+    
+    const attendanceQuery = `
+      INSERT INTO attendance (employee_id, employee_name, month_year, ${days.join(', ')})
+      VALUES (?, ?, ?, ${dayValues.map(() => '?').join(', ')})
+    `;
+    
+    await connection.query(attendanceQuery, [
+      employee_id, 
+      employee_name, 
+      month_year, 
+      ...dayValues
+    ]);
+
+    await connection.commit(); // Commit transaction
+    return employee_id;
   } catch (error) {
+    if (connection) await connection.rollback(); // Rollback on error
     throw new Error(`Failed to insert employee: ${error.message}`);
   } finally {
-    if (connection) connection.release(); // Always release connection
+    if (connection) connection.release();
   }
 };
 

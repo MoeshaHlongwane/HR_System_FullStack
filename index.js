@@ -24,14 +24,11 @@ app.use('/employees', employeesRouter);
 app.use('/leaverequests', leaverequestRouter);
 app.use('/payroll', payrollRouter);
 app.use('/reviews', reviewsRouter)
-
-
-// HR login route (new)
 app.use('/hr', hrRouter); // Route for handling HR login requests
+
 
 // Start the server on port 4000
 app.listen(4000, () => {
   console.log('Server is running at http://localhost:4000');
-  console.log('Hi❤️...');
 });
 

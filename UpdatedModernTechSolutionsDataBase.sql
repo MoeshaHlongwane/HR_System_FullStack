@@ -36,29 +36,28 @@ VALUES
 
 CREATE TABLE employees (
     employee_id INT AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(45) NOT NULL,
+    last_name VARCHAR(45) NOT NULL,
     position VARCHAR(100) NOT NULL,
     contact VARCHAR(100) NOT NULL,
-    history TEXT NOT NULL,
-    review TEXT NOT NULL,
-    department_id INT,  -- Removed 'auto_increment'
+    department_id INT,  
     FOREIGN KEY (department_id) REFERENCES departments(department_id)
 );
 SET FOREIGN_KEY_CHECKS=0;
 -- ---------------------------------------------------- Insert Employee Details with short reviews
 
-INSERT INTO employees (full_name, position, contact, history, review, department_id)
+INSERT INTO employees (first_name,last_name, position, contact, department_id)
 VALUES
-    ('Sibongile Nkosi', 'Software Engineer', 'sibongile.nkosi@moderntech.com', 'Joined in 2015', 'Great team player', 1),
-    ('Lungile Moyo', 'HR Manager', 'lungile.moyo@moderntech.com', 'Joined in 2013', 'Strong leadership', 2),
-    ('Thabo Molefe', 'Quality Analyst', 'thabo.molefe@moderntech.com', 'Joined in 2018', 'Needs improvement', 3),
-    ('Keshav Naidoo', 'Sales Representative', 'keshav.naidoo@moderntech.com', 'Joined in 2020', 'Strong sales skills', 4),
-    ('Zanele Khumalo', 'Marketing Specialist', 'zanele.khumalo@moderntech.com', 'Joined in 2019', 'Creative and innovative', 5),
-    ('Sipho Zulu', 'UI/UX Designer', 'sipho.zulu@moderntech.com', 'Joined in 2016', 'Good design skills', 6),
-    ('Naledi Moeketsi', 'DevOps Engineer', 'naledi.moeketsi@moderntech.com', 'Joined in 2017', 'Meets operational requirements', 7),
-    ('Farai Gumbo', 'Content Strategist', 'farai.gumbo@moderntech.com', 'Joined in 2021', 'Great content skills', 8),
-    ('Karabo Dlamini', 'Accountant', 'karabo.dlamini@moderntech.com', 'Joined in 2018', 'Accurate and reliable', 9),
-    ('Fatima Patel', 'Customer Support Lead', 'fatima.patel@moderntech.com', 'Joined in 2016', 'Excellent customer service', 9);
+    ('Sibongile','Nkosi', 'Software Engineer', 'sibongile.nkosi@moderntech.com', 1),
+    ('Lungile Moyo', 'HR Manager', 'lungile.moyo@moderntech.com', 2),
+    ('Thabo Molefe', 'Quality Analyst', 'thabo.molefe@moderntech.com', 3),
+    ('Keshav Naidoo', 'Sales Representative', 'keshav.naidoo@moderntech.com', 4),
+    ('Zanele Khumalo', 'Marketing Specialist', 'zanele.khumalo@moderntech.com', 5),
+    ('Sipho Zulu', 'UI/UX Designer', 'sipho.zulu@moderntech.com', 6),
+    ('Naledi Moeketsi', 'DevOps Engineer', 'naledi.moeketsi@moderntech.com', 7),
+    ('Farai Gumbo', 'Content Strategist', 'farai.gumbo@moderntech.com', 8),
+    ('Karabo Dlamini', 'Accountant', 'karabo.dlamini@moderntech.com', 9),
+    ('Fatima Patel', 'Customer Support Lead', 'fatima.patel@moderntech.com', 9);
     
 -- -------------------------------------------------------------- Create Leave Requests table
 CREATE TABLE leave_requests (
