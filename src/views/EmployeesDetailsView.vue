@@ -111,21 +111,25 @@ export default {
     ...mapActions(["getEmployees", "addEmployee", "updateEmployee", "deleteEmployee"]),
 
     async handleAddEmployee() {
-      try {
-        const newEmployee = await this.addEmployee(this.insertEmployee);
+    try {
+      // First add the employee
+      const newEmployeeId = await this.addEmployee(this.insertEmployee);
+      
+      // The attendance record is now automatically created in the backend
+      // So we just need to handle the review part
+      await this.$axios.post("http://localhost:4000/reviews", {
+        employee_id: newEmployeeId,
+        performance_review: "New Hire",
+      });
 
-        // Automatically push the new employee to reviews
-        await this.$axios.post("http://localhost:4000/reviews", {
-          employee_id: newEmployee.employee_id,
-          performance_review: "New Hire",
-        });
-
-        this.closeAddModal();
-      } catch (error) {
-        console.error("Error adding employee:", error);
-      }
-    },
-
+      this.closeAddModal();
+      this.getEmployees(); // Refresh the employee list
+    } catch (error) {
+      console.error("Error adding employee:", error);
+      // You might want to show an error message to the user here
+    }
+  },
+  
     handleUpdateEmployee() {
       this.updateEmployee(this.editedEmployee);
       this.closeEditModal();

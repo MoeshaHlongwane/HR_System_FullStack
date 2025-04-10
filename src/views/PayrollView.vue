@@ -13,7 +13,7 @@
       <thead>
         <tr>
           <th>Payroll ID</th>
-          <th>Employee Full Name</th>
+          <th>Employees Name</th>
           <th>Hours Worked</th>
           <th>Leave Deductions</th>
           <th>Gross Salary (R)</th>
@@ -28,7 +28,7 @@
       <tbody v-if="filteredPayrolls.length > 0">
         <tr v-for="payroll in filteredPayrolls" :key="payroll.payroll_id">
           <td>{{ payroll.payroll_id }}</td>
-          <td>{{ payroll.full_name }}</td>
+          <td>{{ payroll.first_name }}</td>
           <td>{{ payroll.hours_worked }}</td>
           <td>{{ payroll.leave_deductions }}</td>
           <td>{{ formatAmount(payroll.gross_salary) }}</td>
@@ -64,7 +64,7 @@ export default {
     // Filters payroll data based on searchQuery
     filteredPayrolls() {
       return this.$store.state.payroll?.filter((payroll) =>
-        payroll.full_name.toLowerCase().includes(this.searchQuery.toLowerCase())
+        payroll.first_name.toLowerCase().includes(this.searchQuery.toLowerCase())
       );
     },
   },
@@ -82,7 +82,7 @@ export default {
       doc.text("Payslip", 80, 20);
       doc.setFont("helvetica", "normal");
       doc.text(`Payroll ID: ${payroll.payroll_id}`, 20, 40);
-      doc.text(`Employee Name: ${payroll.full_name}`, 20, 50);
+      doc.text(`Employee Name: ${payroll.first_name}`, 20, 50);
       doc.text(`Hours Worked: ${payroll.hours_worked}`, 20, 60);
       doc.text(`Leave Deductions: ${payroll.leave_deductions}`, 20, 70);
       doc.text(`Gross Salary: ${this.formatAmount(payroll.gross_salary)}`, 20, 80);

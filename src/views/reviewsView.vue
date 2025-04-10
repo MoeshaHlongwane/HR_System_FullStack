@@ -278,10 +278,10 @@ import NavBar from '@/components/NavBar.vue';
 }
 
   .modal-content form textarea {
-  width: 100%; /* Ensures the textarea takes up the full width of the form */
-  height: 150px; /* Adjust the height as needed */
-  padding: 10px; /* Adds padding for better text input */
-  border-radius: 8px; /* Rounds the corners for a polished look */
+  width: 100%;
+  height: 150px; 
+  padding: 10px; 
+  border-radius: 8px; 
   border: 1px solid #ccc; /* Adds a light border */
   resize: vertical; /* Allows resizing vertically only */
   font-size: 1em; /* Ensures readable text size */

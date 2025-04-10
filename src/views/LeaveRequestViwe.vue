@@ -1,49 +1,59 @@
 <template>
   <NavBar />
-  <h1>Employees leave requests</h1>
-  <div  class="search-container">
-    <input v-model="searchQuery" placeholder="Search employees..." class="search-bar" />
+  <h1>Employees Leave Requests</h1>
+  
+  <div class="search-container">
+    <input v-model="searchQuery" placeholder="Search by employee ID or reason..." class="search-bar" />
   </div>
-  <div v-if="isLoading">Loading leave requests...</div>
 
-  <table v-else class="leaverequest-table">
+  <div v-if="isLoading" class="loading-message">Loading leave requests...</div>
+
+  <table v-else class="leave-request-table">
     <thead>
       <tr>
-        <th>Leave Request ID</th>
+        <th>Request ID</th>
         <th>Employee ID</th>
-        <th>Employee Full Name</th>
-        <th>Date</th>
+        <th>First Name</th>
+        <th>Last Name</th>
+        <th>Leave Type</th>
+        <th>Start Date</th>
+        <th>End Date</th>
         <th>Reason</th>
         <th>Status</th>
-        <th>Action(Accept/Deny requests)</th>
+        <th>Requested Date</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
-      <tr v-for="leaverequest in filteredleaverequests" :key="leaverequest.leave_request_id">
-        <td>{{ leaverequest.leave_request_id }}</td>
-        <td>{{ leaverequest.employee_id }}</td>
-        <td>{{ leaverequest.full_name }}</td>
-        <td>{{ leaverequest.date }}</td>
-        <td>{{ leaverequest.reason }}</td>
-        <td>{{ leaverequest.status }}</td>
+      <tr v-for="request in filteredRequests" :key="request.id">
+        <td>{{ request.id }}</td>
+        <td>{{ request.employee_id }}</td>
+        <td>{{ request.first_name }}</td>
+        <td>{{ request.last_name }}</td>
+        <td>{{ request.leave_type }}</td>
+        <td>{{ formatDate(request.start_date) }}</td>
+        <td>{{ formatDate(request.end_date) }}</td>
+        <td>{{ request.reason }}</td>
+        <td :class="statusClass(request.status)">{{ request.status }}</td>
+        <td>{{ formatDate(request.request_date) }}</td>
         <td>
-          <!-- Only show Accept and Deny buttons if status is 'Pending' -->
           <button 
-            id="accept" 
-            class="btn btn-success" 
-            v-if="leaverequest.status === 'Pending'" 
-            @click="updateStatus(leaverequest.leave_request_id, 'Accepted')"
+            class="btn-accept" 
+            v-if="request.status === 'Pending'" 
+            @click="updateStatus(request.id, 'Approved')"
+            :disabled="updating"
           >
             Accept
           </button>
           <button 
-            id="deny" 
-            class="btn btn-danger" 
-            v-if="leaverequest.status === 'Pending'" 
-            @click="updateStatus(leaverequest.leave_request_id, 'Denied')"
+            class="btn-Denied" 
+            v-if="request.status === 'Pending'" 
+            @click="updateStatus(request.id, 'Rejected')"
+            :disabled="updating"
           >
-            Deny
+            Denied
           </button>
+          <span v-if="request.status !== 'Pending'">No actions</span>
         </td>
       </tr>
     </tbody>
@@ -51,281 +61,180 @@
 </template>
 
 <script>
+import axios from 'axios';
 import NavBar from '@/components/NavBar.vue';
 
 export default {
   data() {
     return {
       searchQuery: '',
-      isLoading: true,  // Added loading state
+      isLoading: true,
+      updating: false,
+      leaveRequests: []
     };
   },
-
   components: {
     NavBar,
   },
-
   computed: {
-    // Filters leave requests data based on searchQuery
-    filteredleaverequests() {
-      // Ensure leaverequests is not null before filtering
-      if (this.$store.state.leaverequests) {
-        return this.$store.state.leaverequests?.filter((leaverequest) =>
-          leaverequest.full_name.toLowerCase().includes(this.searchQuery.toLowerCase())
+    filteredRequests() {
+      if (!this.searchQuery) return this.leaveRequests;
+      
+      const query = this.searchQuery.toLowerCase();
+      return this.leaveRequests.filter(request => {
+        return (
+          String(request.employee_id).includes(query) ||
+          request.reason.toLowerCase().includes(query) ||
+          request.leave_type.toLowerCase().includes(query)
         );
-      }
-      return []; // Return an empty array if leaverequests is null or undefined
-    },
+      });
+    }
   },
-
-  mounted() {
-    // Dispatch the action to load leave requests when the component is mounted
-    this.$store.dispatch('getleaverequests').then(() => {
-      this.isLoading = false;  // Set loading to false after data is fetched
-    });
+  async mounted() {
+    await this.fetchLeaveRequests();
   },
-
   methods: {
-    async updateStatus(leave_request_id, status) {
-      // Dispatch the action to update the status of the leave request
-      await this.$store.dispatch('updateLeaveRequestStatus', { leave_request_id, status });
+    async fetchLeaveRequests() {
+      this.isLoading = true;
+      try {
+        const response = await axios.get('http://localhost:4000/leaverequests');
+        this.leaveRequests = response.data;
+      } catch (error) {
+        console.error("Error fetching leave requests:", error);
+        alert("Failed to load leave requests");
+      }
+      this.isLoading = false;
+    },
+    async updateStatus(id, status) {
+  this.updating = true;
+  try {
+    await axios.patch(`http://localhost:4000/leaverequests/${id}`, { 
+      status: status // Explicitly send as an object
+    }, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+    await this.fetchLeaveRequests();
+  } catch (error) {
+    console.error("Error updating leave request:", error);
+    alert(error.response?.data?.message || "Failed to update leave request");
+  }
+  this.updating = false;
+},
+    formatDate(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      return date.toLocaleDateString();
+    },
+    statusClass(status) {
+      return {
+        'status-approved': status === 'Approved',
+        'status-rejected': status === 'Rejected',
+        'status-pending': status === 'Pending'
+      };
     }
   }
-}
+};
 </script>
 
 <style scoped>
-#accept, #deny {
-  color: white;
-}
-h2 {
-  font-size: 24px;
-  color: #1A3E7D; /* Dark blue */
-  margin-bottom: 20px;
+.loading-message {
   text-align: center;
-}
-.leaverequest-table{
-  width: 90%;
-  margin: 0 auto;
   padding: 20px;
+  font-style: italic;
+  color: #666;
+}
+
+.leave-request-table {
+  width: 95%;
+  margin: 20px auto;
   border-collapse: collapse;
-  margin-top: 20px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
-.leaverequest-table th,
-.leaverequest-table td{
-  padding: 12px;
-  text-align: center;
-  border: 1px solid #B0C4DE; /* Light steel blue border */
-  background-color: #F1F8FF; /* Light blue background for rows */
-  color: #333; /* Dark text for contrast */
-  font-weight: normal;
-}
-.leaverequest-table th{
-  background-color: #4C6D9A; /* Professional bluish header background */
-  color: white;
-  font-weight: bold;
-}
-.leaverequest-table tr:nth-child(even) td {
-  background-color: #E6F1FF; /* Lighter blue for even rows */
-}
-.leaverequest-table tr:nth-child(odd) td {
-  background-color: #FFFFFF; /* White for odd rows */
-}
-th, td {
-  border: 1px solid #ddd;
-  padding: 12px 16px;
+
+.leave-request-table th,
+.leave-request-table td {
+  padding: 12px 15px;
   text-align: left;
+  border-bottom: 1px solid #e0e0e0;
 }
-th {
-  background-color: #007BFF; /* Blue background for table headers */
+
+.leave-request-table th {
+  background-color: #1A3E7D;
   color: white;
-  font-weight: bold;
+  font-weight: 500;
 }
-td {
-  background-color: #FFFFFF; /* White background for table data */
+
+.leave-request-table tr:hover td {
+  background-color: #f5f9ff;
 }
-h1 {
-  font-family: 'Arial', sans-serif;
-  text-align: center;
-  font-size: 36px;
-  color: #007BFF; /* Bluish color for the heading */
-  margin-bottom: 20px;
+
+.status-approved {
+  color: #28a745;
+  font-weight: 500;
 }
+
+.status-rejected {
+  color: #dc3545;
+  font-weight: 500;
+}
+
+.status-pending {
+  color: #ffc107;
+  font-weight: 500;
+}
+
 .search-container {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
+  margin: 20px auto;
+  width: 95%;
+  max-width: 600px;
 }
+
 .search-bar {
-  width: 50%;
-  padding: 10px;
+  width: 100%;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   font-size: 16px;
-  border-radius: 5px;
-  border: 1px solid #007BFF; /* Blue border for the search bar */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
-.search-bar:focus {
-  border-color: #0056B3; /* Darker blue when the search bar is focused */
-}
-button {
-  padding: 8px 16px;
-  border-radius: 5px;
+
+.btn-accept, .btn-Denied {
+  padding: 6px 12px;
+  margin: 0 5px;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 14px;
-  transition: opacity 0.3s ease;
+  transition: background-color 0.2s;
 }
-button.btn-success {
-  background-color: #28A745; /* Green for Accept */
-  border: none;
+
+.btn-accept {
+  background-color: #28a745;
   color: white;
 }
-button.btn-danger {
-  background-color: #DC3545; /* Red for Deny */
-  border: none;
+
+.btn-Denied {
+  background-color: #dc3545;
   color: white;
 }
-button:hover {
-  opacity: 0.8; /* Slight hover effect */
+
+.btn-accept:hover {
+  background-color: #218838;
 }
-button:focus {
-  outline: none;
+
+.btn-Denied:hover {
+  background-color: #c82333;
+}
+
+.btn-accept:disabled, .btn-Denied:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+h1 {
+  color: #1A3E7D;
+  text-align: center;
+  margin: 20px 0;
 }
 </style>
-
-
-
-
-
-
-<!-- <template>
-    <NavBar/>
-    <h1>Leave requests</h1>
-    <table>
-        <thead>
-          <th>Leave_request_id</th>
-          <th>Employee_id</th>
-          <th>Employee Full Name</th>
-          <th>Date</th>
-          <th>Reason</th>
-          <th>Status</th>
-          <th>Action</th>
-        </thead>
-        <tbody>
-          <tr v-for="leaverequest in $store.state.leaverequests" :key="leaverequests">
-            <td>{{ leaverequest.leave_request_id }}</td>
-            <td>{{ leaverequest.employee_id }}</td>
-            <td>{{ leaverequest.full_name }}</td>
-            <td>{{ leaverequest.date }}</td>
-            <td>{{ leaverequest.reason }}</td>
-            <td>{{ leaverequest.status }}</td>
-            <td><button>Accept</button>
-              <button>Deny</button></td>
-          </tr>
-        </tbody>
-    </table>
-
-    
-</template>
-<script>
-import AttendanceCalender from '@/components/AttendanceCalender.vue';
-import NavBar from '@/components/NavBar.vue';
-
-export default{
-    components: {
-        NavBar,
-        AttendanceCalender
-    },
-    mounted() {
-        this.$store.dispatch("getleaverequests")
-        
-    },
-}
-
-</script> -->
-<!-- <template>
-  <NavBar />
-  <h1>Leave requests</h1>
-
-  <table>
-      <thead>
-          <tr>
-              <th>Leave_request_id</th>
-              <th>Employee_id</th>
-              <th>Employee Full Name</th>
-              <th>Date</th>
-              <th>Reason</th>
-              <th>Status</th>
-              <th>Action</th>
-              <th>Updated Response</th>
-          </tr>
-      </thead>
-      <tbody>
-          <tr v-for="leaverequest in filteredLeaveRequests" :key="leaverequest.leave_request_id">
-              <td>{{ leaverequest.leave_request_id }}</td>
-              <td>{{ leaverequest.employee_id }}</td>
-              <td>{{ leaverequest.full_name }}</td>
-              <td>{{ leaverequest.date }}</td>
-              <td>{{ leaverequest.reason }}</td>
-              <td>{{ leaverequest.status }}</td>
-              <td>
-                  Show buttons only if the status is 'pending'
-                  <button v-if="leaverequest.status === 'pending'" @click="acceptLeaveRequest(leaverequest)">Accept</button>
-                  <button v-if="leaverequest.status === 'pending'" @click="denyLeaveRequest(leaverequest)">Deny</button>
-              </td>
-              <td>{{ leaverequest.updated_response }}</td>
-          </tr>
-      </tbody>
-  </table>
-</template>
-
-<script> -->
-<!-- import NavBar from '@/components/NavBar.vue';
-
-export default {
-  components: {
-      NavBar,
-  },
-  data() {
-      return {
-          searchQuery: '', // This can be removed as it's no longer needed
-      };
-  },
-  computed: {
-      // Filtered leave requests based on status
-      filteredLeaveRequests() {
-          // Ensure 'leaveRequests' is not null or undefined
-          return (this.leaveRequests || []).filter(request => request.status === 'pending');
-      }
-  },
-  mounted() {
-      this.$store.dispatch('getleaverequests');
-  },
-  methods: {
-      // Action to accept a leave request
-      async acceptLeaveRequest(leaverequest) {
-          try {
-              // Change status to 'accepted'
-              await this.$store.dispatch('updateLeaveRequestStatus', {
-                  leave_request_id: leaverequest.leave_request_id,
-                  status: 'accepted',
-              });
-          } catch (error) {
-              console.error('Error accepting leave request:', error);
-          }
-      },
-      // Action to deny a leave request
-      async denyLeaveRequest(leaverequest) {
-          try {
-              // Change status to 'denied'
-              await this.$store.dispatch('updateLeaveRequestStatus', {
-                  leave_request_id: leaverequest.leave_request_id,
-                  status: 'denied',
-              });
-          } catch (error) {
-              console.error('Error denying leave request:', error);
-          }
-      },
-  },
-};
-</script> -->
